@@ -255,9 +255,9 @@
         actions.append(
           makeButton("glance", "↗  Otwórz w Glance", "primary"),
           makeButton("new-tab", "↗  Otwórz w nowej karcie"),
+          makeButton("split", "◫  Add to Split"),
           makeButton("save-as", "↓  Zapisz element docelowy jako…"),
-          makeButton("copy", "⧉  Kopiuj link"),
-          makeButton("split", "◫  Add to Split")
+          makeButton("copy", "⧉  Kopiuj link")
         );
 
         statusLabel = doc.createElement("div");
