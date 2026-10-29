@@ -198,7 +198,7 @@
 
         popupHost = doc.createElement("div");
         popupHost.setAttribute("data-glance-left-click-ui", "true");
-        popupHost.style.cssText = "position:fixed!important;left:0;top:0;display:none;width:min(370px,calc(100vw - 16px));max-width:calc(100vw - 16px);z-index:2147483647!important;margin:0!important;padding:0!important;border:0!important;background:transparent!important;pointer-events:auto!important;";
+        popupHost.style.cssText = "position:fixed!important;left:0;top:0;display:none;width:min(300px,calc(100vw - 16px));max-width:calc(100vw - 16px);z-index:2147483647!important;margin:0!important;padding:0!important;border:0!important;background:transparent!important;pointer-events:auto!important;";
         shadow = popupHost.attachShadow({ mode: "open" });
         const style = doc.createElement("style");
         style.textContent = [
@@ -353,7 +353,7 @@
         const rect = link.getBoundingClientRect();
         popupHost.style.display = "block";
         const popupRect = popupHost.getBoundingClientRect();
-        const width = popupRect.width || Math.min(370, win.innerWidth - 16);
+        const width = popupRect.width || Math.min(300, win.innerWidth - 16);
         const height = popupRect.height || 120;
         const left = Math.max(8, Math.min(rect.left, win.innerWidth - width - 8));
         let top = rect.bottom + 8;
