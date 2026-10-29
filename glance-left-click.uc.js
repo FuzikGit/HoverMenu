@@ -1,10 +1,12 @@
 (() => {
   "use strict";
 
-  const BUILD = "0.2.0";
+  const BUILD = "0.4.0";
   const PREFIX = "FuzikGit:GlanceLeftClick";
   const DEBUG_MESSAGE = `${PREFIX}:Debug`;
   const SPLIT_MESSAGE = `${PREFIX}:AddToSplit`;
+  const OPEN_TAB_MESSAGE = `${PREFIX}:OpenNewTab`;
+  const SAVE_AS_MESSAGE = `${PREFIX}:SaveAs`;
 
   if (window.__glanceLeftClickBuild === BUILD) {
     console.info(`[Glance Left Click] Build ${BUILD} already loaded.`);
@@ -18,7 +20,32 @@
     const PREFIX = "FuzikGit:GlanceLeftClick";
     const DEBUG_MESSAGE = PREFIX + ":Debug";
     const SPLIT_MESSAGE = PREFIX + ":AddToSplit";
+    const OPEN_TAB_MESSAGE = PREFIX + ":OpenNewTab";
+    const SAVE_AS_MESSAGE = PREFIX + ":SaveAs";
+    const PREF_LEFT_CLICK_GLANCE = "glance-left-click.open_glance_on_left_click";
+    const PREF_HOVER_MENU = "glance-left-click.show_hover_menu";
     const attachedDocuments = new WeakSet();
+
+    const prefs = (() => {
+      try {
+        if (globalThis.Services?.prefs) return globalThis.Services.prefs;
+      } catch (_) {}
+      try {
+        return ChromeUtils.importESModule("resource://gre/modules/Services.sys.mjs").Services.prefs;
+      } catch (_) {}
+      try {
+        return ChromeUtils.import("resource://gre/modules/Services.jsm").Services.prefs;
+      } catch (_) {}
+      return null;
+    })();
+
+    function prefBool(name, fallback = true) {
+      try {
+        return prefs ? prefs.getBoolPref(name, fallback) : fallback;
+      } catch (_) {
+        return fallback;
+      }
+    }
 
     function report(stage, details = {}) {
       try {
@@ -128,6 +155,21 @@
       let showTimer = null;
       let hideTimer = null;
 
+      const hoverPrefObserver = {
+        observe(_subject, topic, changedPref) {
+          if (topic === "nsPref:changed" && changedPref === PREF_HOVER_MENU && !prefBool(PREF_HOVER_MENU, true)) {
+            hidePopup();
+          }
+        }
+      };
+
+      try {
+        prefs?.addObserver(PREF_HOVER_MENU, hoverPrefObserver);
+        win.addEventListener("unload", () => {
+          try { prefs?.removeObserver(PREF_HOVER_MENU, hoverPrefObserver); } catch (_) {}
+        }, { once: true });
+      } catch (_) {}
+
       function clearShowTimer() {
         if (showTimer !== null) win.clearTimeout(showTimer);
         showTimer = null;
@@ -212,6 +254,8 @@
         };
         actions.append(
           makeButton("glance", "↗  Otwórz w Glance", "primary"),
+          makeButton("new-tab", "↗  Otwórz w nowej karcie"),
+          makeButton("save-as", "↓  Zapisz element docelowy jako…"),
           makeButton("copy", "⧉  Kopiuj link"),
           makeButton("split", "◫  Add to Split")
         );
@@ -243,6 +287,37 @@
               const ok = await copyURL(url, doc, win);
               statusLabel.textContent = ok ? "Link skopiowany ✓" : "Nie udało się skopiować linku";
               report("copy-url", { ok, url });
+              return;
+            }
+
+            if (action === "new-tab") {
+              try {
+                const sourceBrowsingContextId = content.browsingContext?.top?.id;
+                sendAsyncMessage(OPEN_TAB_MESSAGE, { url, sourceBrowsingContextId });
+                report("new-tab-request-sent", { url, sourceBrowsingContextId });
+                hidePopup();
+              } catch (error) {
+                statusLabel.textContent = "Nie udało się otworzyć nowej karty";
+                report("new-tab-request-error", { error: String(error) });
+              }
+              return;
+            }
+
+            if (action === "save-as") {
+              try {
+                const sourceBrowsingContextId = content.browsingContext?.top?.id;
+                const downloadName = link.getAttribute("download") || null;
+                sendAsyncMessage(SAVE_AS_MESSAGE, {
+                  url,
+                  sourceBrowsingContextId,
+                  downloadName
+                });
+                report("save-as-request-sent", { url, sourceBrowsingContextId });
+                hidePopup();
+              } catch (error) {
+                statusLabel.textContent = "Nie udało się rozpocząć zapisywania";
+                report("save-as-request-error", { error: String(error) });
+              }
               return;
             }
 
@@ -314,6 +389,12 @@
       }
 
       function onMouseOver(event) {
+        if (!prefBool(PREF_HOVER_MENU, true)) {
+          clearShowTimer();
+          if (popupHost && popupHost.style.display !== "none") hidePopup();
+          return;
+        }
+
         if (isPopupPath(event)) {
           clearHideTimer();
           return;
@@ -341,6 +422,11 @@
       }
 
       function onMouseOut(event) {
+        if (!prefBool(PREF_HOVER_MENU, true)) {
+          if (popupHost && popupHost.style.display !== "none") hidePopup();
+          return;
+        }
+
         if (isPopupPath(event)) {
           if (!isPopupNode(event.relatedTarget)) scheduleHide();
           return;
@@ -368,6 +454,10 @@
 
       function handleClick(event) {
         if (isPopupPath(event)) return;
+
+        // Setting 1: let the website handle ordinary LPM when disabled.
+        if (!prefBool(PREF_LEFT_CLICK_GLANCE, true)) return;
+
         if (
           !event.isTrusted ||
           event.button !== 0 ||
@@ -475,6 +565,102 @@
       }
     }
   };
+
+  function findSourceBrowser(data) {
+    const contextId = Number(data?.sourceBrowsingContextId);
+    if (!Number.isFinite(contextId)) return null;
+    return [...gBrowser.browsers].find(item => item.browsingContext?.id === contextId) || null;
+  }
+
+  const openTabListener = {
+    receiveMessage(message) {
+      if (message.name !== OPEN_TAB_MESSAGE) return;
+      const data = message.data || {};
+      if (!data.url || !/^https?:\/\//i.test(data.url)) return;
+
+      try {
+        const browser = findSourceBrowser(data);
+        if (!browser) {
+          console.warn("[Glance Left Click] Open in new tab: source browser not found.");
+          return;
+        }
+
+        const principal = browser.contentPrincipal;
+        if (!principal) {
+          console.warn("[Glance Left Click] Open in new tab: content principal unavailable.");
+          return;
+        }
+
+        urlSecurityCheck(data.url, principal, Ci.nsIScriptSecurityManager.DISALLOW_SCRIPT);
+        openLinkIn(data.url, "tab", {
+          triggeringPrincipal: principal,
+          userContextId: gBrowser.getTabForBrowser(browser)?.userContextId || 0,
+          openerBrowser: browser,
+          allowThirdPartyFixup: false
+        });
+        console.info("[Glance Left Click] Opened link in a new tab:", data.url);
+      } catch (error) {
+        console.error("[Glance Left Click] Open in new tab failed:", error);
+      }
+    }
+  };
+
+  const saveAsListener = {
+    receiveMessage(message) {
+      if (message.name !== SAVE_AS_MESSAGE) return;
+      const data = message.data || {};
+      if (!data.url || !/^https?:\/\//i.test(data.url)) return;
+
+      try {
+        const browser = findSourceBrowser(data);
+        if (!browser) {
+          console.warn("[Glance Left Click] Save target as: source browser not found.");
+          return;
+        }
+
+        const principal = browser.contentPrincipal;
+        if (!principal) {
+          console.warn("[Glance Left Click] Save target as: content principal unavailable.");
+          return;
+        }
+
+        urlSecurityCheck(data.url, principal, Ci.nsIScriptSecurityManager.DISALLOW_SCRIPT);
+
+        if (typeof saveURL !== "function") {
+          throw new Error("Firefox saveURL helper is unavailable.");
+        }
+
+        // Use Firefox's native Save As workflow, including its file picker.
+        saveURL(
+          data.url,
+          null, // original URL
+          data.downloadName || null, // suggested file name when link has download attribute
+          null, // native Save Link As title/default
+          true, // bypass cache
+          false, // prompt for destination
+          null, // referrer info not serialized from the content process
+          browser.cookieJarSettings || null,
+          browser.contentDocument || null,
+          undefined, // derive private-browsing state from the initiating document
+          principal
+        );
+        console.info("[Glance Left Click] Save target as started:", data.url);
+      } catch (error) {
+        console.error("[Glance Left Click] Save target as failed:", error);
+      }
+    }
+  };
+
+  if (window.__glanceLeftClickOpenTabListener) {
+    mm.removeMessageListener(OPEN_TAB_MESSAGE, window.__glanceLeftClickOpenTabListener);
+  }
+  if (window.__glanceLeftClickSaveAsListener) {
+    mm.removeMessageListener(SAVE_AS_MESSAGE, window.__glanceLeftClickSaveAsListener);
+  }
+  window.__glanceLeftClickOpenTabListener = openTabListener;
+  window.__glanceLeftClickSaveAsListener = saveAsListener;
+  mm.addMessageListener(OPEN_TAB_MESSAGE, openTabListener);
+  mm.addMessageListener(SAVE_AS_MESSAGE, saveAsListener);
 
   if (window.__glanceLeftClickDebugListener) {
     mm.removeMessageListener(DEBUG_MESSAGE, window.__glanceLeftClickDebugListener);
