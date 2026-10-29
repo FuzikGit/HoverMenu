@@ -253,11 +253,11 @@
           return button;
         };
         actions.append(
-          makeButton("glance", "↗  Otwórz w Glance", "primary"),
-          makeButton("new-tab", "↗  Otwórz w nowej karcie"),
+          makeButton("glance", "↗  Open in Glance", "primary"),
+          makeButton("new-tab", "↗  Open in New Card"),
           makeButton("split", "◫  Add to Split"),
-          makeButton("save-as", "↓  Zapisz element docelowy jako…"),
-          makeButton("copy", "⧉  Kopiuj link")
+          makeButton("save-as", "↓  Save As…"),
+          makeButton("copy", "⧉  Copy link")
         );
 
         statusLabel = doc.createElement("div");
