@@ -1,7 +1,7 @@
 (() => {
   "use strict";
 
-  const BUILD = "0.4.0";
+  const BUILD = "0.5.0";
   const PREFIX = "FuzikGit:GlanceLeftClick";
   const DEBUG_MESSAGE = `${PREFIX}:Debug`;
   const SPLIT_MESSAGE = `${PREFIX}:AddToSplit`;
@@ -198,7 +198,7 @@
 
         popupHost = doc.createElement("div");
         popupHost.setAttribute("data-glance-left-click-ui", "true");
-        popupHost.style.cssText = "position:fixed!important;left:0;top:0;display:none;width:min(300px,calc(100vw - 16px));max-width:calc(100vw - 16px);z-index:2147483647!important;margin:0!important;padding:0!important;border:0!important;background:transparent!important;pointer-events:auto!important;";
+        popupHost.style.cssText = "position:fixed!important;left:0;top:0;display:none;width:min(210px,calc(100vw - 16px));max-width:calc(100vw - 16px);z-index:2147483647!important;margin:0!important;padding:0!important;border:0!important;background:transparent!important;pointer-events:auto!important;";
         shadow = popupHost.attachShadow({ mode: "open" });
         const style = doc.createElement("style");
         style.textContent = [
@@ -223,7 +223,7 @@
         const panel = doc.createElement("section");
         panel.className = "panel";
         panel.setAttribute("role", "dialog");
-        panel.setAttribute("aria-label", "Akcje linku");
+        panel.setAttribute("aria-label", "Quick Access");
 
         const heading = doc.createElement("div");
         heading.className = "heading";
@@ -235,7 +235,7 @@
         meta.className = "meta";
         const title = doc.createElement("span");
         title.className = "title";
-        title.textContent = "SQuick Actions";
+        title.textContent = "Quick Access";
         urlLabel = doc.createElement("span");
         urlLabel.className = "url";
         urlLabel.id = "url";
@@ -244,20 +244,29 @@
 
         const actions = doc.createElement("div");
         actions.className = "actions";
-        const makeButton = (action, text, className = "") => {
+        const iconMarkup = {
+          glance: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3h7v7"/><path d="M10 14 21 3"/><path d="M18 13v5a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3V9a3 3 0 0 1 3-3h5"/></svg>',
+          "new-tab": '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="14" height="15" rx="2"/><path d="M8 5V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2"/><path d="M10 12h6M13 9v6"/></svg>',
+          split: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M12 3v18"/><path d="M7 8h2M15 8h2M7 12h2M15 12h2M7 16h2M15 16h2"/></svg>',
+          "save-as": '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M4 19v2h16v-2"/></svg>',
+          copy: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="8" width="12" height="13" rx="2"/><path d="M16 8V5a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h2"/></svg>'
+        };
+        const makeButton = (action, tooltip, className = "") => {
           const button = doc.createElement("button");
           button.type = "button";
           button.dataset.action = action;
+          button.dataset.tooltip = tooltip;
+          button.setAttribute("aria-label", tooltip);
           if (className) button.className = className;
-          button.textContent = text;
+          button.innerHTML = iconMarkup[action];
           return button;
         };
         actions.append(
-          makeButton("glance", "↗  Open in Glance", "primary"),
-          makeButton("new-tab", "↗  Open in New Card"),
-          makeButton("split", "◫  Add to Split"),
-          makeButton("save-as", "↓  Save As…"),
-          makeButton("copy", "⧉  Copy link")
+          makeButton("glance", "Open in Glance", "primary"),
+          makeButton("new-tab", "Open in New Card"),
+          makeButton("split", "Add to split"),
+          makeButton("save-as", "Save As..."),
+          makeButton("copy", "Copy link")
         );
 
         statusLabel = doc.createElement("div");
@@ -353,12 +362,15 @@
         const rect = link.getBoundingClientRect();
         popupHost.style.display = "block";
         const popupRect = popupHost.getBoundingClientRect();
-        const width = popupRect.width || Math.min(300, win.innerWidth - 16);
-        const height = popupRect.height || 120;
+        const width = popupRect.width || Math.min(210, win.innerWidth - 16);
+        const height = popupRect.height || 90;
         const left = Math.max(8, Math.min(rect.left, win.innerWidth - width - 8));
         let top = rect.bottom + 8;
         if (top + height > win.innerHeight - 8) top = rect.top - height - 8;
         top = Math.max(8, Math.min(top, win.innerHeight - height - 8));
+        // Place icon tooltips on the side with more free viewport space.
+        popupHost.dataset.tooltipPlacement =
+          (win.innerHeight - (top + height)) >= (top) ? "bottom" : "top";
         popupHost.style.left = left + "px";
         popupHost.style.top = top + "px";
       }

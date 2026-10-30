@@ -1,16 +1,17 @@
-# Glance Left Click
+# OnHoverActions
 
 Sine mod for Zen Browser.
 
 ## Features
 
 - Optional ordinary left-click to open links in Zen Glance.
-- Optional hover action panel with:
+- Optional compact icon-only Quick Access panel shown when hovering links.
+- Tooltips on the action icons:
   - Open in Glance
-  - Open in new tab
-  - Save target as… (native Firefox/Zen Save As flow)
+  - Open in New Card
+  - Add to split
+  - Save As...
   - Copy link
-  - Add to Split View
 
 ## Settings
 
