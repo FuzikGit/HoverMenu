@@ -1,25 +1,19 @@
-# OnHoverActions
+# OnHoverActions 0.5.1
 
-Sine mod for Zen Browser.
+Compact Quick Access hover panel for Zen Browser and Sine.
 
-## Features
+## Actions
+- Open in Glance
+- Open in New Card
+- Add to split
+- Save As...
+- Copy link
 
-- Optional ordinary left-click to open links in Zen Glance.
-- Optional compact icon-only Quick Access panel shown when hovering links.
-- Tooltips on the action icons:
-  - Open in Glance
-  - Open in New Card
-  - Add to split
-  - Save As...
-  - Copy link
+Buttons are icon-only, with text tooltips on hover/focus. The two Sine preferences from 0.5.0 are preserved.
 
-## Settings
-
-- **Otwieraj linki w Glance po kliknięciu LPM**
-- **Pokaż menu akcji po najechaniu na link**
-
-Both options are enabled by default.
-
-## Install
-
-Install the public GitHub repository through Sine. Keep `theme.json`, `preferences.json`, `glance-left-click.uc.js`, and `README.md` in the repository root.
+## Repository files
+Keep these exact names in the repository root:
+- `glance-left-click.uc.js`
+- `theme.json`
+- `preferences.json`
+- `README.md`

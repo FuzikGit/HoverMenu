@@ -1,7 +1,7 @@
 {
   "id": "glance-left-click",
   "name": "OnHoverActions",
-  "description": "Compact icon-only Quick Access hover panel for Glance, new tab, Split View, Save As and copying links.",
+  "description": "Compact icon-only Quick Access hover panel for Glance, new tab, Split View, Save As and copying links. Includes icon hover tooltips.",
   "scripts": {
     "glance-left-click.uc.js": {
       "include": [
@@ -12,7 +12,7 @@
   "preferences": "preferences.json",
   "readme": "README.md",
   "author": "FuzikGit",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "tags": [
     "Zen Browser",
     "Glance",

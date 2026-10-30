@@ -1,7 +1,7 @@
 (() => {
   "use strict";
 
-  const BUILD = "0.5.0";
+  const BUILD = "0.5.1";
   const PREFIX = "FuzikGit:GlanceLeftClick";
   const DEBUG_MESSAGE = `${PREFIX}:Debug`;
   const SPLIT_MESSAGE = `${PREFIX}:AddToSplit`;
@@ -198,25 +198,34 @@
 
         popupHost = doc.createElement("div");
         popupHost.setAttribute("data-glance-left-click-ui", "true");
-        popupHost.style.cssText = "position:fixed!important;left:0;top:0;display:none;width:min(210px,calc(100vw - 16px));max-width:calc(100vw - 16px);z-index:2147483647!important;margin:0!important;padding:0!important;border:0!important;background:transparent!important;pointer-events:auto!important;";
+        popupHost.style.cssText = "position:fixed!important;left:0;top:0;display:none;width:min(220px,calc(100vw - 16px));max-width:calc(100vw - 16px);z-index:2147483647!important;margin:0!important;padding:0!important;border:0!important;background:transparent!important;pointer-events:auto!important;";
         shadow = popupHost.attachShadow({ mode: "open" });
         const style = doc.createElement("style");
         style.textContent = [
           ':host { all: initial; color-scheme: dark; font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }',
           '* { box-sizing: border-box; }',
-          '.panel { width:100%; padding:10px; border:1px solid rgba(255,255,255,.18); border-radius:13px; color:#f8fafc; background:rgba(25,27,32,.97); box-shadow:0 10px 34px rgba(0,0,0,.38), 0 2px 8px rgba(0,0,0,.2); backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px); font-size:13px; line-height:1.35; }',
-          '.heading { display:flex; align-items:center; gap:8px; margin:0 0 9px; min-width:0; }',
-          '.mark { display:flex; align-items:center; justify-content:center; flex:0 0 28px; height:28px; border-radius:8px; background:#334b91; font-size:16px; }',
+          '.panel { width:100%; padding:9px; overflow:visible; border:1px solid rgba(255,255,255,.16); border-radius:12px; color:#f8fafc; background:rgba(25,27,32,.97); box-shadow:0 8px 26px rgba(0,0,0,.34), 0 2px 7px rgba(0,0,0,.18); backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px); font-size:12px; line-height:1.25; }',
+          '.heading { display:flex; align-items:center; gap:7px; margin:0 0 8px; min-width:0; }',
+          '.mark { display:flex; align-items:center; justify-content:center; flex:0 0 21px; width:21px; height:21px; border-radius:6px; background:rgba(255,255,255,.09); color:#dce5ff; font-size:13px; }',
           '.meta { min-width:0; flex:1; }',
-          '.title { display:block; color:#fff; font-weight:650; font-size:12px; margin-bottom:2px; }',
-          '.url { display:block; color:#b9c0cc; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-size:11px; }',
-          '.actions { display:flex; flex-wrap:wrap; gap:6px; }',
-          'button { appearance:none; border:1px solid rgba(255,255,255,.15); border-radius:8px; padding:7px 9px; margin:0; font:600 12px/1.2 system-ui,-apple-system,"Segoe UI",sans-serif; color:#f4f6fb; background:rgba(255,255,255,.08); cursor:pointer; white-space:nowrap; }',
-          'button:hover { background:rgba(255,255,255,.16); }',
+          '.title { display:block; color:#fff; font-weight:650; font-size:12px; line-height:1.2; }',
+          '.url { display:none; }',
+          '.actions { display:flex; flex-wrap:nowrap; align-items:center; justify-content:space-between; gap:5px; width:100%; }',
+          'button { appearance:none; position:relative; display:inline-flex; flex:0 0 32px; align-items:center; justify-content:center; width:32px; min-width:32px; height:32px; padding:0; margin:0; border:1px solid rgba(255,255,255,.13); border-radius:8px; color:#e7ebf4; background:rgba(255,255,255,.07); cursor:pointer; }',
+          'button svg { display:block; width:17px; height:17px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }',
+          'button:hover { color:#fff; border-color:rgba(255,255,255,.28); background:rgba(255,255,255,.15); }',
           'button:focus-visible { outline:2px solid #91b4ff; outline-offset:2px; }',
-          'button.primary { flex:1 1 100%; padding:9px 10px; border-color:#5c7cfa; color:#fff; background:#4263eb; }',
-          'button.primary:hover { background:#5473f4; }',
-          '.status { min-height:14px; margin:7px 2px 0; color:#aebbd0; font-size:11px; }'
+          'button.primary { flex:0 0 32px; width:32px; height:32px; padding:0; color:#b9caff; border-color:rgba(105,140,255,.48); background:rgba(66,99,235,.16); }',
+          'button.primary:hover { color:#fff; border-color:#8ba7ff; background:rgba(66,99,235,.32); }',
+          'button[data-tooltip]::after { content:attr(data-tooltip); position:absolute; z-index:20; left:50%; max-width:calc(100vw - 24px); padding:5px 8px; border:1px solid rgba(255,255,255,.16); border-radius:6px; color:#f8fafc; background:#17191f; box-shadow:0 4px 14px rgba(0,0,0,.35); font:500 11px/1.2 system-ui,-apple-system,"Segoe UI",sans-serif; white-space:nowrap; pointer-events:none; opacity:0; visibility:hidden; transform:translateX(-50%); transition:opacity .12s ease, visibility .12s ease; }',
+          'button[data-tooltip]:hover::after, button[data-tooltip]:focus-visible::after { opacity:1; visibility:visible; }',
+          ':host([data-tooltip-placement="bottom"]) button[data-tooltip]::after { top:calc(100% + 7px); }',
+          ':host([data-tooltip-placement="top"]) button[data-tooltip]::after { bottom:calc(100% + 7px); }',
+          'button:first-child[data-tooltip]::after { left:0; transform:none; }',
+          'button:last-child[data-tooltip]::after { left:auto; right:0; transform:none; }',
+          '.status { min-height:0; margin:0; color:#aebbd0; font-size:10px; }',
+          '.status:empty { display:none; }',
+          '.status:not(:empty) { margin:7px 2px 0; }'
         ].join("\n");
         shadow.appendChild(style);
 
@@ -362,7 +371,7 @@
         const rect = link.getBoundingClientRect();
         popupHost.style.display = "block";
         const popupRect = popupHost.getBoundingClientRect();
-        const width = popupRect.width || Math.min(210, win.innerWidth - 16);
+        const width = popupRect.width || Math.min(220, win.innerWidth - 16);
         const height = popupRect.height || 90;
         const left = Math.max(8, Math.min(rect.left, win.innerWidth - width - 8));
         let top = rect.bottom + 8;
