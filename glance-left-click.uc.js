@@ -235,7 +235,7 @@
         meta.className = "meta";
         const title = doc.createElement("span");
         title.className = "title";
-        title.textContent = "Szybkie akcje linku";
+        title.textContent = "SQuick Actions";
         urlLabel = doc.createElement("span");
         urlLabel.className = "url";
         urlLabel.id = "url";
